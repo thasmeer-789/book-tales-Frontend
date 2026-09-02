@@ -269,15 +269,27 @@ const Payment = () => {
           }
         },
 
-        // =========================
+               // =========================
         // PAYMENT WINDOW CLOSED
         // =========================
 
         modal: {
-          ondismiss: () => {
+          ondismiss: async () => {
             toast.error(
               "Payment cancelled."
             );
+
+            try {
+              await api.post(
+                "/Payment/fail",
+                { orderId: order.id }
+              );
+            } catch (err) {
+              console.error(
+                "Failed to mark payment as failed:",
+                err
+              );
+            }
 
             setIsProcessing(false);
           },
@@ -293,7 +305,7 @@ const Payment = () => {
 
       razorpay.on(
         "payment.failed",
-        (response) => {
+        async (response) => {
           console.error(
             "Payment failed:",
             response.error
@@ -303,6 +315,18 @@ const Payment = () => {
             response.error?.description ||
               "Payment failed."
           );
+
+          try {
+            await api.post(
+              "/Payment/fail",
+              { orderId: order.id }
+            );
+          } catch (err) {
+            console.error(
+              "Failed to mark payment as failed:",
+              err
+            );
+          }
 
           setIsProcessing(false);
         }
